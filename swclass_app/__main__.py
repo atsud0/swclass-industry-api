@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 
 from .refresher import refresh
-from .web import create_app, start_daily_refresh
+from .web import create_app, ensure_initial_data, start_daily_refresh
 
 
 def main() -> None:
@@ -27,6 +27,7 @@ def main() -> None:
         return
 
     if args.command == "serve":
+        ensure_initial_data()
         if not args.no_scheduler:
             start_daily_refresh()
         app = create_app()

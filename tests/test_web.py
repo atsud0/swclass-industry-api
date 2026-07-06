@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, time
 
-from swclass_app.web import create_app, seconds_until_next_run
+from swclass_app.web import create_app, ensure_initial_data, seconds_until_next_run
 
 
 def test_api_requires_bearer_token(tmp_path):
@@ -59,6 +59,39 @@ def test_health_returns_refresh_metadata(tmp_path):
         "xlsx_sha256": "sha256",
         "xlsx_size_bytes": 7,
     }
+
+
+def test_ensure_initial_data_refreshes_when_output_is_missing(tmp_path):
+    output_json = tmp_path / "swclass.json"
+    calls = []
+
+    did_refresh = ensure_initial_data(output_json=output_json, refresh_func=lambda: calls.append("refresh"))
+
+    assert did_refresh is True
+    assert calls == ["refresh"]
+
+
+def test_ensure_initial_data_skips_refresh_when_output_exists(tmp_path):
+    output_json = tmp_path / "swclass.json"
+    output_json.write_text("[]", encoding="utf-8")
+    calls = []
+
+    did_refresh = ensure_initial_data(output_json=output_json, refresh_func=lambda: calls.append("refresh"))
+
+    assert did_refresh is False
+    assert calls == []
+
+
+def test_ensure_initial_data_does_not_stop_startup_when_refresh_fails(tmp_path, capsys):
+    output_json = tmp_path / "swclass.json"
+
+    def fail_refresh():
+        raise RuntimeError("download failed")
+
+    did_refresh = ensure_initial_data(output_json=output_json, refresh_func=fail_refresh)
+
+    assert did_refresh is False
+    assert "initial refresh failed: download failed" in capsys.readouterr().out
 
 
 def test_seconds_until_next_run_uses_today_when_time_has_not_passed():

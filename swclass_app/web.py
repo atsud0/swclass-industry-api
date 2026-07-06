@@ -4,6 +4,7 @@ import json
 import os
 import threading
 import time
+from collections.abc import Callable
 from datetime import datetime, time as datetime_time, timedelta
 from pathlib import Path
 
@@ -40,6 +41,20 @@ def create_app(
 
 
 DEFAULT_REFRESH_TIME = datetime_time(7, 0)
+
+
+def ensure_initial_data(
+    output_json: Path = OUTPUT_JSON,
+    refresh_func: Callable[[], object] = refresh,
+) -> bool:
+    if output_json.exists():
+        return False
+    try:
+        refresh_func()
+    except Exception as exc:
+        print(f"initial refresh failed: {exc}", flush=True)
+        return False
+    return True
 
 
 def start_daily_refresh(refresh_time: datetime_time = DEFAULT_REFRESH_TIME) -> threading.Thread:

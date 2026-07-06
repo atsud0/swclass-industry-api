@@ -61,6 +61,8 @@ curl http://127.0.0.1:5000/health
 xlsx 哈希和上一轮记录对比；哈希不变时，`last_checked_at` 会更新，`last_updated_at` 保持不变。
 
 服务启动后会开启后台线程，按服务器本地时间每天 07:00 刷新一次。刷新失败时不会删除旧 JSON。
+如果启动时发现 `data/swclass_industry_stocks.json` 不存在，服务会先自动尝试刷新一次；
+如果这次刷新失败，服务仍会启动，数据接口继续返回 `503 data_not_ready`，等待后续手动或定时刷新成功。
 
 ## Docker Compose 部署
 
