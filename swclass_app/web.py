@@ -9,17 +9,21 @@ from pathlib import Path
 
 from flask import Flask, Response, jsonify, request
 
-from .config import DEFAULT_TOKEN, OUTPUT_JSON
-from .refresher import refresh
+from .config import DEFAULT_TOKEN, OUTPUT_JSON, REFRESH_METADATA
+from .refresher import load_refresh_metadata, refresh
 
 
-def create_app(output_json: Path = OUTPUT_JSON, token: str | None = None) -> Flask:
+def create_app(
+    output_json: Path = OUTPUT_JSON,
+    metadata_path: Path = REFRESH_METADATA,
+    token: str | None = None,
+) -> Flask:
     app = Flask(__name__)
     api_token = token or os.environ.get("SWCLASS_API_TOKEN", DEFAULT_TOKEN)
 
     @app.get("/health")
-    def health() -> tuple[dict[str, str], int]:
-        return {"status": "ok"}, 200
+    def health() -> tuple[dict[str, str | int | None], int]:
+        return {"status": "ok", **load_refresh_metadata(metadata_path)}, 200
 
     @app.get("/api/swclass")
     def swclass() -> Response | tuple[dict[str, str], int]:

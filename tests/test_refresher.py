@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import ssl
 
 from swclass_app import refresher
@@ -126,3 +127,74 @@ def test_extract_archive_extracts_real_swclass_rar(tmp_path):
     refresher.extract_archive(archive_path, extract_dir)
 
     assert (extract_dir / refresher.SOURCE_XLSX_NAME).is_file()
+
+
+def test_refresh_writes_xlsx_hashes_and_update_time(tmp_path, monkeypatch):
+    archive_path = tmp_path / "SwClass.rar"
+    extract_dir = tmp_path / "SwClass"
+    output_json = tmp_path / "swclass.json"
+    metadata_path = tmp_path / "refresh_state.json"
+
+    def fake_download(source_url, path):
+        path.write_bytes(b"archive")
+
+    def fake_extract(path, directory):
+        directory.mkdir(parents=True)
+        (directory / refresher.SOURCE_XLSX_NAME).write_bytes(b"xlsx-v1")
+
+    monkeypatch.setattr(refresher, "download_archive", fake_download)
+    monkeypatch.setattr(refresher, "extract_archive", fake_extract)
+    monkeypatch.setattr(refresher, "parse_industry_stocks", lambda path: [{"大众出版": ["600373.SH"]}])
+
+    refresher.refresh(
+        source_url="https://example.test/SwClass.rar",
+        archive_path=archive_path,
+        extract_dir=extract_dir,
+        output_json=output_json,
+        metadata_path=metadata_path,
+        now=lambda: datetime(2026, 7, 6, 1, 2, 3, tzinfo=timezone.utc),
+    )
+
+    metadata = refresher.load_refresh_metadata(metadata_path)
+    assert metadata["last_checked_at"] == "2026-07-06T01:02:03Z"
+    assert metadata["last_updated_at"] == "2026-07-06T01:02:03Z"
+    assert metadata["xlsx_size_bytes"] == 7
+    assert metadata["xlsx_md5"] == "72e360cf18bb1ac94b2b1c485ccf4951"
+    assert metadata["xlsx_sha256"] == "296ca376ec9dd5d8f3a6ce3a992739d7d10a45c73826d4181cf0db4937240382"
+
+
+def test_refresh_preserves_update_time_when_xlsx_hash_is_unchanged(tmp_path, monkeypatch):
+    archive_path = tmp_path / "SwClass.rar"
+    extract_dir = tmp_path / "SwClass"
+    output_json = tmp_path / "swclass.json"
+    metadata_path = tmp_path / "refresh_state.json"
+
+    def fake_download(source_url, path):
+        path.write_bytes(b"archive")
+
+    def fake_extract(path, directory):
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / refresher.SOURCE_XLSX_NAME).write_bytes(b"xlsx-v1")
+
+    monkeypatch.setattr(refresher, "download_archive", fake_download)
+    monkeypatch.setattr(refresher, "extract_archive", fake_extract)
+    monkeypatch.setattr(refresher, "parse_industry_stocks", lambda path: [{"大众出版": ["600373.SH"]}])
+
+    refresher.refresh(
+        archive_path=archive_path,
+        extract_dir=extract_dir,
+        output_json=output_json,
+        metadata_path=metadata_path,
+        now=lambda: datetime(2026, 7, 6, 1, 2, 3, tzinfo=timezone.utc),
+    )
+    refresher.refresh(
+        archive_path=archive_path,
+        extract_dir=extract_dir,
+        output_json=output_json,
+        metadata_path=metadata_path,
+        now=lambda: datetime(2026, 7, 7, 4, 5, 6, tzinfo=timezone.utc),
+    )
+
+    metadata = refresher.load_refresh_metadata(metadata_path)
+    assert metadata["last_checked_at"] == "2026-07-07T04:05:06Z"
+    assert metadata["last_updated_at"] == "2026-07-06T01:02:03Z"

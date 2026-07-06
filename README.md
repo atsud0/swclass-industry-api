@@ -24,6 +24,7 @@ python -m swclass_app refresh
 
 ```text
 data/swclass_industry_stocks.json
+data/swclass_refresh_state.json
 ```
 
 JSON 结构：
@@ -48,6 +49,16 @@ python -m swclass_app serve --host 0.0.0.0 --port 5000
 curl -H "Authorization: Bearer your-token" \
   http://127.0.0.1:5000/api/swclass
 ```
+
+健康检查：
+
+```bash
+curl http://127.0.0.1:5000/health
+```
+
+`/health` 会返回最近一次下载检查时间 `last_checked_at`、最近一次 xlsx 内容实际变化时间
+`last_updated_at`，以及当前 xlsx 的 `xlsx_md5`、`xlsx_sha256` 和文件大小。刷新时会用
+xlsx 哈希和上一轮记录对比；哈希不变时，`last_checked_at` 会更新，`last_updated_at` 保持不变。
 
 服务启动后会开启后台线程，按服务器本地时间每天 07:00 刷新一次。刷新失败时不会删除旧 JSON。
 
