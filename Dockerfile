@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates libarchive13 tzdata \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata unar \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

@@ -5,7 +5,7 @@ import ssl
 import urllib.request
 from pathlib import Path
 
-import libarchive
+import rarfile
 
 from .config import ARCHIVE_PATH, EXTRACT_DIR, OUTPUT_JSON, SOURCE_URL, SOURCE_XLSX_NAME
 from .parser import parse_industry_stocks, write_industry_json
@@ -40,18 +40,23 @@ def download_archive(source_url: str, archive_path: Path) -> None:
 def extract_archive(archive_path: Path, extract_dir: Path) -> None:
     extract_dir.mkdir(parents=True, exist_ok=True)
     base_dir = extract_dir.resolve()
-    with libarchive.file_reader(str(archive_path)) as entries:
-        for entry in entries:
-            target_path = _safe_extract_path(base_dir, entry.pathname)
-            if entry.filetype == "directory":
+    extracted_files = 0
+    with rarfile.RarFile(archive_path) as archive:
+        for entry in archive.infolist():
+            target_path = _safe_extract_path(base_dir, entry.filename)
+            if entry.isdir():
                 target_path.mkdir(parents=True, exist_ok=True)
                 continue
-            if entry.filetype != "file":
+            if not entry.is_file():
                 continue
             target_path.parent.mkdir(parents=True, exist_ok=True)
-            with target_path.open("wb") as output:
-                for block in entry.get_blocks():
-                    output.write(block)
+            with archive.open(entry) as source, target_path.open("wb") as output:
+                shutil.copyfileobj(source, output)
+            extracted_files += 1
+
+    expected_file = extract_dir / SOURCE_XLSX_NAME
+    if extracted_files == 0 or not expected_file.is_file():
+        raise RuntimeError(f"RAR 解压失败，未找到目标文件: {expected_file}")
 
 
 def _safe_extract_path(base_dir: Path, archive_member: str) -> Path:

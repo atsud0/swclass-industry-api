@@ -11,7 +11,7 @@ python3 -m venv .venv
 pip install -r requirements.txt
 ```
 
-RAR 解压通过 Python 包 `libarchive-c` 调用系统 `libarchive` 完成，不再直接调用 `7z`、`unrar` 等命令。运行环境需要可加载的 `libarchive` 动态库。
+RAR 解压通过 Python 包 `rarfile` 处理归档条目，并使用 `unar` 作为 RAR5 解码后端。解压后会校验目标 xlsx 是否存在，避免空解压被当成成功。
 
 ## 手动刷新数据
 
@@ -59,7 +59,7 @@ curl -H "Authorization: Bearer your-token" \
 swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/python:3.13-slim-bookworm
 ```
 
-这个镜像对应 Docker Hub 的 `python:3.13-slim-bookworm`。构建时会安装 Debian 包 `libarchive13`、`tzdata`、`ca-certificates`。
+这个镜像对应 Docker Hub 的 `python:3.13-slim-bookworm`。构建时会安装 Debian 包 `unar`、`tzdata`、`ca-certificates`。
 
 如果要临时换成其他镜像源：
 
