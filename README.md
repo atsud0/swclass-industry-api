@@ -92,7 +92,17 @@ curl -H "Authorization: Bearer your-token" \
   http://127.0.0.1:5000/api/swclass
 ```
 
-数据会持久化在 Compose volume `swclass-data` 中。
+服务会加入外部网络 `swclass_industry_api_network`。启动前需要先确保网络存在：
+
+```bash
+podman network create swclass_industry_api_network
+```
+
+数据会通过 Compose volume `swclass_industry_api_data` 绑定到宿主机 `/opt/docker-data/swclass-industry-api/`，容器内路径是 `/app/data`。启动前需要确保宿主机目录存在：
+
+```bash
+mkdir -p /opt/docker-data/swclass-industry-api
+```
 
 ## 测试
 

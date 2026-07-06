@@ -13,7 +13,9 @@ services:
     ports:
       - "${SWCLASS_API_PORT:-5000}:5000"
     volumes:
-      - swclass-data:/app/data
+      - swclass_industry_api_data:/app/data
+    networks:
+      - swclass_industry_api_network
     healthcheck:
       test:
         [
@@ -27,5 +29,14 @@ services:
       retries: 3
       start_period: 20s
 
+networks:
+  swclass_industry_api_network:
+    external: true
+
 volumes:
-  swclass-data:
+  swclass_industry_api_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /opt/docker-data/swclass-industry-api/
+      o: bind
