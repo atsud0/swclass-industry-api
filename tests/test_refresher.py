@@ -144,7 +144,18 @@ def test_refresh_writes_xlsx_hashes_and_update_time(tmp_path, monkeypatch):
 
     monkeypatch.setattr(refresher, "download_archive", fake_download)
     monkeypatch.setattr(refresher, "extract_archive", fake_extract)
-    monkeypatch.setattr(refresher, "parse_industry_stocks", lambda path: [{"大众出版": ["600373.SH"]}])
+    monkeypatch.setattr(
+        refresher,
+        "parse_industry_stocks",
+        lambda path: [
+            {
+                "name": "传媒",
+                "children": [
+                    {"name": "出版", "children": [{"name": "大众出版", "codes": ["600373.SH"]}]},
+                ],
+            },
+        ],
+    )
 
     refresher.refresh(
         source_url="https://example.test/SwClass.rar",
@@ -178,7 +189,18 @@ def test_refresh_preserves_update_time_when_xlsx_hash_is_unchanged(tmp_path, mon
 
     monkeypatch.setattr(refresher, "download_archive", fake_download)
     monkeypatch.setattr(refresher, "extract_archive", fake_extract)
-    monkeypatch.setattr(refresher, "parse_industry_stocks", lambda path: [{"大众出版": ["600373.SH"]}])
+    monkeypatch.setattr(
+        refresher,
+        "parse_industry_stocks",
+        lambda path: [
+            {
+                "name": "传媒",
+                "children": [
+                    {"name": "出版", "children": [{"name": "大众出版", "codes": ["600373.SH"]}]},
+                ],
+            },
+        ],
+    )
 
     refresher.refresh(
         archive_path=archive_path,

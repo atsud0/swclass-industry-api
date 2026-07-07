@@ -12,7 +12,7 @@ from pathlib import Path
 import rarfile
 
 from .config import ARCHIVE_PATH, EXTRACT_DIR, OUTPUT_JSON, REFRESH_METADATA, SOURCE_URL, SOURCE_XLSX_NAME
-from .parser import parse_industry_stocks, write_industry_json
+from .parser import IndustryTree, parse_industry_stocks, write_industry_json
 
 
 def refresh(
@@ -22,7 +22,7 @@ def refresh(
     output_json: Path = OUTPUT_JSON,
     metadata_path: Path = REFRESH_METADATA,
     now: Callable[[], datetime] | None = None,
-) -> list[dict[str, list[str]]]:
+) -> IndustryTree:
     download_archive(source_url, archive_path)
     extract_archive(archive_path, extract_dir)
     xlsx_path = extract_dir / SOURCE_XLSX_NAME

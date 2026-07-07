@@ -6,9 +6,19 @@ from datetime import datetime, time
 from swclass_app.web import create_app, ensure_initial_data, seconds_until_next_run
 
 
+SAMPLE_INDUSTRY_TREE = [
+    {
+        "name": "传媒",
+        "children": [
+            {"name": "出版", "children": [{"name": "大众出版", "codes": ["600373.SH"]}]},
+        ],
+    },
+]
+
+
 def test_api_requires_bearer_token(tmp_path):
     output_json = tmp_path / "swclass.json"
-    output_json.write_text(json.dumps([{"大众出版": ["600373.SH"]}], ensure_ascii=False), encoding="utf-8")
+    output_json.write_text(json.dumps(SAMPLE_INDUSTRY_TREE, ensure_ascii=False), encoding="utf-8")
     app = create_app(output_json=output_json, token="secret")
     client = app.test_client()
 
@@ -19,7 +29,7 @@ def test_api_requires_bearer_token(tmp_path):
 
 def test_api_returns_generated_json_with_valid_token(tmp_path):
     output_json = tmp_path / "swclass.json"
-    expected = [{"大众出版": ["600373.SH"]}]
+    expected = SAMPLE_INDUSTRY_TREE
     output_json.write_text(json.dumps(expected, ensure_ascii=False), encoding="utf-8")
     app = create_app(output_json=output_json, token="secret")
     client = app.test_client()
